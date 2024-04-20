@@ -15,10 +15,11 @@ from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.formatting import Text
 from aiogram import F
-
 from aiogram.types import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, \
     InlineKeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+import Database
 
 dotenv.load_dotenv()
 
@@ -67,12 +68,25 @@ async def send_random_value(callback: types.CallbackQuery, bot: Bot):
         if member_status.status != 'left':
             await callback.answer("Вы являетесь участником канала ☑️")
             subscribed = True
+
+            ## тут дописать кем он инвайтнут
         else:
             await callback.answer("Вы не являетесь участником канала ❌")
     except Exception as e:
         logging.error(f"Ошибка при проверке участия пользователя в канале: {e}")
         await callback.answer("Ошибка при проверке участия пользователя в канале!")
         # await callback.message.answer(res.status)
+
+
+@dp.message(Command("referral"))
+async def cmd_refferal(message: types.Message):
+    global subscribed
+    if not subscribed:
+        await message.answer("Пожалуйста, подпишитесь на канал, чтобы продолжить использование бота.")
+    else:
+        ref_count = Database.get_referrals_count(message.chat.id)
+        await message.answer(
+            f"Кол-во рефов - {ref_count}.\nВаша реф ссылка - https://t.me/cerebrrrrrrr_test_bot?start={message.chat.id}")
 
 
 @dp.message(Command("random"))
