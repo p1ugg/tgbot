@@ -28,18 +28,19 @@ TOKEN = getenv("BOT_TOKEN")
 dp = Dispatcher()
 router = Router(name=__name__)
 
+kb_start = InlineKeyboardBuilder()
+kb_start.add(InlineKeyboardButton(
+    text='Подписаться',
+    url='https://t.me/laslaldlsala')
+)
+kb_start.add(InlineKeyboardButton(
+    text='Проверить',
+    callback_data='check')
+)
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-    kb_start = InlineKeyboardBuilder()
-    kb_start.add(InlineKeyboardButton(
-        text='Подписаться',
-        url='https://t.me/laslaldlsala')
-    )
-    kb_start.add(InlineKeyboardButton(
-        text='Проверить',
-        callback_data='check')
-    )
+
 
     if not Database.check_user_in_db(str(message.from_user.id)):
         Database.add_user(str(message.from_user.id), message.from_user.full_name, '')
@@ -48,27 +49,23 @@ async def command_start_handler(message: Message):
 
             if " " in message.text:
                 referrer_candidate = message.text.split()[1]
-                # print(referrer_candidate)
                 try:
                     referrer_candidate = int(referrer_candidate)
-                    # print(message.from_user.id != referrer_candidate)
-                    # print('--------------')
-                    # print(Database.get_all_users())
 
-                    if message.from_user.id != referrer_candidate and str(referrer_candidate) in Database.get_all_users():
+                    if message.from_user.id != referrer_candidate and str(
+                            referrer_candidate) in Database.get_all_users():
                         referer = referrer_candidate
                         Database.add_inv_ref(message.from_user.id, referer)
-                        # Database.add_user(message.from_user.id, message.from_user.full_name, referer)
 
                 except ValueError:
                     pass
         await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\nДля начала выполни условия",
                              reply_markup=kb_start.as_markup())
+    await message.answer("Приветствуем в боте! Доступные команды - /referrals")
 
 
 @dp.callback_query(F.data == "check")
 async def check_subscribe(callback: types.CallbackQuery, bot: Bot):
-
     try:
         member_status = await bot.get_chat_member(chat_id='@laslaldlsala', user_id=callback.message.chat.id)
         if member_status.status != 'left':
@@ -85,25 +82,31 @@ async def check_subscribe(callback: types.CallbackQuery, bot: Bot):
 
 
 @dp.message(Command("referral"))
-async def cmd_refferal(message: types.Message):
-    ref_count = Database.get_referrals_count(message.chat.id)
-    await message.answer(
-        f"Кол-во рефов - {ref_count}.\nВаша реф ссылка - https://t.me/cerebrrrrrrr_test_bot?start={message.chat.id}")
+async def cmd_refferal(message: types.Message, bot: Bot):
+    member_status = await bot.get_chat_member(chat_id='@laslaldlsala', user_id=message.chat.id)
+    if member_status.status != 'left':
+        ref_count = Database.get_referrals_count(message.chat.id)
+        await message.answer(
+            f"Кол-во рефов - {ref_count}.\nВаша реф ссылка - https://t.me/cerebrrrrrrr_test_bot?start={message.chat.id}")
+    else:
+        await message.answer("Для использования бота подпишитесь на канал", reply_markup=kb_start.as_markup())
 
 
 @dp.message(Command("random"))
-async def cmd_random(message: types.Message):
-
-    builder = InlineKeyboardBuilder()
-    builder.add(types.InlineKeyboardButton(
-        text="Нажми меня",
-        callback_data="random_value")
-    )
-    await message.answer(
-        "Нажмите на кнопку, чтобы бот отправил число от 1 до 10",
-        reply_markup=builder.as_markup()
-    )
-
+async def cmd_random(message: types.Message, bot: Bot):
+    member_status = await bot.get_chat_member(chat_id='@laslaldlsala', user_id=message.chat.id)
+    if member_status.status != 'left':
+        builder = InlineKeyboardBuilder()
+        builder.add(types.InlineKeyboardButton(
+            text="Нажми меня",
+            callback_data="random_value")
+        )
+        await message.answer(
+            "Нажмите на кнопку, чтобы бот отправил число от 1 до 10",
+            reply_markup=builder.as_markup()
+        )
+    else:
+        await message.answer("Для использования бота подпишитесь на канал", reply_markup=kb_start.as_markup())
 
 @dp.callback_query(F.data == "random_value")
 async def send_random_value(callback: types.CallbackQuery):
