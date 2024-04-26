@@ -38,10 +38,9 @@ kb_start.add(InlineKeyboardButton(
     callback_data='check')
 )
 
+
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-
-
     if not Database.check_user_in_db(str(message.from_user.id)):
         Database.add_user(str(message.from_user.id), message.from_user.full_name, '')
         if not Database.has_referrer(message.from_user.id):
@@ -61,7 +60,9 @@ async def command_start_handler(message: Message):
                     pass
         await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!\nДля начала выполни условия",
                              reply_markup=kb_start.as_markup())
-    await message.answer("Приветствуем в боте! Доступные команды - /referrals")
+
+    else:
+        await message.answer("Приветствуем в боте! Доступные команды - /referrals")
 
 
 @dp.callback_query(F.data == "check")
@@ -72,7 +73,9 @@ async def check_subscribe(callback: types.CallbackQuery, bot: Bot):
             await callback.answer("Вы являетесь участником канала ☑️")
 
             ## тут дописать кем он инвайтнут
-
+            print(callback.message.chat.id)
+            await bot.send_message(chat_id=callback.message.chat.id,
+                                   text=f"ℹ️ Вы были приглашены пользователем {str(Database.get_name(callback.message.chat.id))}")
         else:
             await callback.answer("Вы не являетесь участником канала ❌")
     except Exception as e:
@@ -81,36 +84,18 @@ async def check_subscribe(callback: types.CallbackQuery, bot: Bot):
         # await callback.message.answer(res.status)
 
 
-@dp.message(Command("referral"))
+@dp.message(Command("referrals"))
 async def cmd_refferal(message: types.Message, bot: Bot):
     member_status = await bot.get_chat_member(chat_id='@laslaldlsala', user_id=message.chat.id)
     if member_status.status != 'left':
         ref_count = Database.get_referrals_count(message.chat.id)
         await message.answer(
             f"Кол-во рефов - {ref_count}.\nВаша реф ссылка - https://t.me/cerebrrrrrrr_test_bot?start={message.chat.id}")
+        if ref_count >= 1:
+            await bot.send_message(chat_id=message.chat.id,
+                                   text=f"{html.bold('Ваши рефералы:')}\n{Database.get_referrals_names(message.chat.id)}")
     else:
         await message.answer("Для использования бота подпишитесь на канал", reply_markup=kb_start.as_markup())
-
-
-@dp.message(Command("random"))
-async def cmd_random(message: types.Message, bot: Bot):
-    member_status = await bot.get_chat_member(chat_id='@laslaldlsala', user_id=message.chat.id)
-    if member_status.status != 'left':
-        builder = InlineKeyboardBuilder()
-        builder.add(types.InlineKeyboardButton(
-            text="Нажми меня",
-            callback_data="random_value")
-        )
-        await message.answer(
-            "Нажмите на кнопку, чтобы бот отправил число от 1 до 10",
-            reply_markup=builder.as_markup()
-        )
-    else:
-        await message.answer("Для использования бота подпишитесь на канал", reply_markup=kb_start.as_markup())
-
-@dp.callback_query(F.data == "random_value")
-async def send_random_value(callback: types.CallbackQuery):
-    await callback.message.answer(str(randint(1, 10)))
 
 
 async def main() -> None:

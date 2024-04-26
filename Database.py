@@ -100,6 +100,41 @@ def check_user_in_db(TG_ID):
         return True
     return False
 
+def get_name(TG_ID):
+    conn = sqlite3.connect('mydata.db')
+
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT inv_referral FROM users WHERE TG_ID = ?", (TG_ID,))
+    TG_ID_invaited = "".join(cursor.fetchall()[0])
+    cursor.execute("SELECT name FROM users WHERE TG_ID = ?", (TG_ID_invaited,))
+    row = cursor.fetchall()
+
+    conn.commit()
+
+    conn.close()
+    if row:
+        return "".join(row[0])
+    return "None"
+
+def get_referrals_names(TG_ID):
+    conn = sqlite3.connect('mydata.db')
+
+    cursor = conn.cursor()
+    cursor.execute("SELECT referrals FROM users WHERE TG_ID = ?", (TG_ID,))
+    row = cursor.fetchall()[0][0].split(', ')
+    s = []
+    for num,id in enumerate(row):
+        cursor.execute("SELECT name FROM users WHERE TG_ID = ?", (id,))
+        s.append(f'{num+1}. {cursor.fetchall()[0][0]}')
+
+    conn.commit()
+
+    conn.close()
+    return "\n".join(s)
+
+
+
 # add_inv_ref('2424243','1040305807')
 
 # print(has_referrer(2543535435))
