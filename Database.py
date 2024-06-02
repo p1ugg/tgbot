@@ -10,13 +10,14 @@ def get_referrals_count(TG_ID):
 
     cursor = conn.cursor()
     cursor.execute("SELECT referrals FROM users WHERE TG_ID = ?", (TG_ID,))
-    row = cursor.fetchall()
+    row = cursor.fetchall()[0][0]
+
     conn.commit()
 
     conn.close()
-    try:
-        return len(" ".join(row[0]).split(", "))
-    except Exception as ex:
+    if row:
+        return len(row.split(", "))
+    else:
         return 0
 
 def has_referrer(TG_ID):
