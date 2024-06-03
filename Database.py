@@ -1,9 +1,9 @@
 import sqlite3
 
-
 conn = sqlite3.connect('mydata.db')
 
 cursor = conn.cursor()
+
 
 def get_referrals_count(TG_ID):
     conn = sqlite3.connect('mydata.db')
@@ -20,6 +20,7 @@ def get_referrals_count(TG_ID):
     else:
         return 0
 
+
 def has_referrer(TG_ID):
     conn = sqlite3.connect('mydata.db')
 
@@ -31,7 +32,6 @@ def has_referrer(TG_ID):
     conn.commit()
 
     conn.close()
-    print(row)
     if row:
         return False
     return True
@@ -50,22 +50,27 @@ def get_all_users():
     conn.close()
     return tg_ids
 
-def add_inv_ref(TGID_invaited,TGID_refowner):
+
+def add_inv_ref(TGID_invaited, TGID_refowner):
     conn = sqlite3.connect('mydata.db')
 
     cursor = conn.cursor()
 
-    cursor.execute("UPDATE users SET inv_referral = ? WHERE TG_ID = ?", (TGID_refowner,TGID_invaited))
+    cursor.execute("UPDATE users SET inv_referral = ? WHERE TG_ID = ?", (TGID_refowner, TGID_invaited))
 
     cursor.execute("SELECT referrals FROM users WHERE TG_ID = ?", (TGID_refowner,))
     row = cursor.fetchall()
-
+    print(row)
     try:
-        new_refs = " ".join(row[0]).split(", ")
-        new_refs.append(TGID_invaited)
-        new_refs = ", ".join(new_refs)
-    except Exception:
-        new_refs = f'{TGID_invaited}, '
+        if row[0][0]:
+            new_refs = f'{row[0][0]},{TGID_invaited}'
+        else:
+            new_refs = f'{TGID_invaited}'
+    except Exception as ex:
+        print(ex)
+        pass
+
+
 
     cursor.execute("UPDATE users SET referrals = ? WHERE TG_ID = ?", (new_refs, TGID_refowner))
 
@@ -73,13 +78,16 @@ def add_inv_ref(TGID_invaited,TGID_refowner):
 
     conn.close()
 
+# add_inv_ref('849778335','1040305807' )
+
 
 def add_user(TG_ID, name, inv_referral):
     conn = sqlite3.connect('mydata.db')
 
     cursor = conn.cursor()
 
-    cursor.execute("INSERT INTO users (TG_ID, name, referrals, inv_referral) VALUES (?, ?, ?, ?)", (TG_ID, name, '', inv_referral))
+    cursor.execute("INSERT INTO users (TG_ID, name, referrals, inv_referral, balance) VALUES (?, ?, ?, ?, ?)",
+                   (TG_ID, name, '', inv_referral, 0))
 
     conn.commit()
 
@@ -101,6 +109,7 @@ def check_user_in_db(TG_ID):
         return True
     return False
 
+
 def get_name(TG_ID):
     conn = sqlite3.connect('mydata.db')
 
@@ -118,6 +127,7 @@ def get_name(TG_ID):
         return "".join(row[0])
     return "None"
 
+
 def get_referrals_names(TG_ID):
     conn = sqlite3.connect('mydata.db')
 
@@ -125,9 +135,9 @@ def get_referrals_names(TG_ID):
     cursor.execute("SELECT referrals FROM users WHERE TG_ID = ?", (TG_ID,))
     row = cursor.fetchall()[0][0].split(', ')
     s = []
-    for num,id in enumerate(row):
-        cursor.execute("SELECT name FROM users WHERE TG_ID = ?", (id,))
-        s.append(f'{num+1}. {cursor.fetchall()[0][0]}')
+    for num, id in enumerate(row):
+        cursor.execute("SELECT name FROM users WHERE TG_ID = ?", (str(id),))
+        s.append(f'{num + 1}. {cursor.fetchall()[0][0]}')
 
     conn.commit()
 
@@ -135,6 +145,20 @@ def get_referrals_names(TG_ID):
     return "\n".join(s)
 
 
+def update_balance(TG_ID, amount):
+    conn = sqlite3.connect('mydata.db')
+
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM users WHERE TG_ID = ?", (TG_ID,))
+    now_balance = cursor.fetchall()[0][0] + amount
+    cursor.execute("UPDATE users SET balance = ? WHERE TG_ID = ?", (now_balance, TG_ID))
+
+    conn.commit()
+
+    conn.close()
+
+
+# update_balance('1040305807', 200)
 
 # add_inv_ref('2424243','1040305807')
 
