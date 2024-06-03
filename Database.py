@@ -16,7 +16,7 @@ def get_referrals_count(TG_ID):
 
     conn.close()
     if row:
-        return len(row.split(", "))
+        return len(row.split(","))
     else:
         return 0
 
@@ -133,7 +133,7 @@ def get_referrals_names(TG_ID):
 
     cursor = conn.cursor()
     cursor.execute("SELECT referrals FROM users WHERE TG_ID = ?", (TG_ID,))
-    row = cursor.fetchall()[0][0].split(', ')
+    row = cursor.fetchall()[0][0].split(',')
     s = []
     for num, id in enumerate(row):
         cursor.execute("SELECT name FROM users WHERE TG_ID = ?", (str(id),))
